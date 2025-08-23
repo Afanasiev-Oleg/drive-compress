@@ -10,18 +10,12 @@ async function main() {
   const SCRIPT_ID = process.env.SCRIPT_ID;
   const SA_KEYFILE = process.env.GOOGLE_APPLICATION_CREDENTIALS;
 
-  if (!SCRIPT_ID) throw new Error('SCRIPT_ID is not set');
-  if (!SA_KEYFILE || !fs.existsSync(SA_KEYFILE)) {
-    throw new Error('Service account key file not found (GOOGLE_APPLICATION_CREDENTIALS)');
-  }
-  if (!fs.existsSync(ROOT_DIR)) throw new Error(`ROOT_DIR not found: ${ROOT_DIR}`);
+  const CLIENT_ID = process.env.CLIENT_ID;
+  const CLIENT_SECRET = process.env.CLIENT_SECRET;
+  const REFRESH_TOKEN = process.env.REFRESH_TOKEN;
 
-  // Авторизация по сервисному аккаунту
-  const auth = await google.auth.getClient({
-    keyFile: SA_KEYFILE,
-    scopes: ['https://www.googleapis.com/auth/script.projects'],
-  });
-  const script = google.script({ version: 'v1', auth });
+  if (!SCRIPT_ID) throw new Error('SCRIPT_ID is not set');
+  if (!fs.existsSync(ROOT_DIR)) throw new Error(`ROOT_DIR not found: ${ROOT_DIR}`);
 
   // Собираем файлы: .gs -> SERVER_JS, appsscript.json -> JSON (name=appsscript)
   const entries = fs.readdirSync(ROOT_DIR, { withFileTypes: true })
@@ -60,6 +54,26 @@ async function main() {
     if (a.type !== 'JSON' && b.type === 'JSON') return 1;
     return a.name.localeCompare(b.name);
   });
+
+  let auth;
+  if (CLIENT_ID && CLIENT_SECRET && REFRESH_TOKEN) {
+    const oauth2 = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET);
+    oauth2.setCredentials({ refresh_token: REFRESH_TOKEN });
+    // прогрев, чтобы сразу упасть, если токен невалиден
+    await oauth2.getAccessToken();
+    auth = oauth2;
+    console.log('Auth mode: OAuth (user refresh token)');
+  } else if (SA_KEYFILE && fs.existsSync(SA_KEYFILE)) {
+    auth = await google.auth.getClient({
+      keyFile: SA_KEYFILE,
+      scopes: ['https://www.googleapis.com/auth/script.projects'],
+    });
+    console.log('Auth mode: Service Account (fallback)');
+  } else {
+    throw new Error('No OAuth credentials (CLIENT_ID/CLIENT_SECRET/REFRESH_TOKEN) and no Service Account key provided.');
+  }
+
+  const script = google.script({ version: 'v1', auth });
 
   console.log('Uploading files:\n' + files.map(f => ` - ${f.type}: ${f.name}`).join('\n'));
 
