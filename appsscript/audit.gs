@@ -49,7 +49,7 @@ function cmdRefresh() {
 
   // Шапка (Path перед Name — как договорились)
   sh.appendRow([
-    'FileId','Path','Name','MimeType','SizeMB','DurationSec','MB_per_min',
+    'FileId','Path','Name','MimeType','SizeMB','DurationSec','MBperMin',
     'Width','Height','ModifiedTime','NeedCompress','HasOldRevisions',
     'Recommend','Why','Action','EstNewSizeMB','EstSavingsMB','MarkDeleteRevisions (Y/N)','Status'
   ]);
