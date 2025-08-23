@@ -19,7 +19,6 @@ jobs:
     env:
       ROOT_DIR: appsscript
       SCRIPT_ID: ${{ secrets.SCRIPT_ID }}
-      GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/sa.json
     steps:
       - name: Checkout
         uses: actions/checkout@v4
