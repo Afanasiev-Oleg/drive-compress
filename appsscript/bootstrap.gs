@@ -78,7 +78,7 @@ function bootstrap() {
   const sh = getOrCreate_(ss, 'Videos');
   if (sh.getLastRow() === 0) {
     sh.appendRow([
-      'FileId','Path','Name','MimeType','SizeMB','DurationSec','MB_per_min',
+      'FileId','Path','Name','MimeType','SizeMB','DurationSec','MBperMin',
       'Width','Height','ModifiedTime','NeedCompress','HasOldRevisions',
       'Recommend','Why','Action','EstNewSizeMB','EstSavingsMB','MarkDeleteRevisions (Y/N)','Status'
     ]);
