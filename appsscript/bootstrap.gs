@@ -78,9 +78,9 @@ function bootstrap() {
   const sh = getOrCreate_(ss, 'Videos');
   if (sh.getLastRow() === 0) {
     sh.appendRow([
-      'FileId','Path','Name','MimeType','SizeMB','DurationSec','MBperMin',
-      'Width','Height','ModifiedTime','NeedCompress','HasOldRevisions',
-      'Recommend','Why','Action','EstNewSizeMB','EstSavingsMB','MarkDeleteRevisions (Y/N)','Status'
+      'File ID','Path','Name','MIME Type','Size MB','Duration Sec','MBperMin',
+      'Width','Height','Modified Time','Need Compress','Has Old Revisions',
+      'Recommend','Why','Action','Est. New Size MB','Est. Savings MB','Delete Old Revisions (Y/N)','Status'
     ]);
     sh.setFrozenRows(1);
     shVideos.getRange(1, 1, 1, COL.Status).setHorizontalAlignment('center');
