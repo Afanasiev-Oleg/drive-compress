@@ -1,4 +1,4 @@
-name: Deploy Apps Script
+name: Deploy Apps Script (via Service Account)
 
 on:
   push:
@@ -6,6 +6,7 @@ on:
     paths:
       - 'appsscript/**'
       - '.github/workflows/apps_script_deploy.yml'
+      - 'scripts/apps_script_push.js'
   workflow_dispatch: {}
 
 concurrency:
@@ -16,45 +17,36 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     env:
-      ROOT_DIR: appsscript               # папка с *.gs и appsscript.json
-      SCRIPT_ID: ${{ secrets.SCRIPT_ID }} # Script ID проекта Apps Script
+      ROOT_DIR: appsscript
+      SCRIPT_ID: ${{ secrets.SCRIPT_ID }}
+      GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/sa.json
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Verify ROOT_DIR exists
         run: |
-          if [ ! -d "$ROOT_DIR" ]; then
-            echo "::error::Directory '$ROOT_DIR' not found. Create it and place your *.gs and appsscript.json inside."
-            exit 1
-          fi
+          test -d "$ROOT_DIR" || { echo "::error::Directory '$ROOT_DIR' not found"; exit 1; }
           ls -la "$ROOT_DIR"
+
+      - name: Write Service Account key
+        run: |
+          echo '${{ secrets.GCP_SA_JSON }}' > "$GOOGLE_APPLICATION_CREDENTIALS"
+          chmod 600 "$GOOGLE_APPLICATION_CREDENTIALS"
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name: Install clasp
-        run: npm i -g @google/clasp
-
-      - name: Write Service Account key
+      - name: Install deps
         run: |
-          echo '${{ secrets.GCP_SA_JSON }}' > $HOME/sa.json
-          # файл автоматически маскируется GitHub, но на всякий случай запретим чтение другими
-          chmod 600 $HOME/sa.json
-
-      - name: Auth with Service Account
-        run: clasp login --creds $HOME/sa.json --no-localhost
-
-      - name: Create .clasp.json
-        run: |
-          printf '{\n  "scriptId": "%s",\n  "rootDir": "%s"\n}\n' "$SCRIPT_ID" "$ROOT_DIR" > .clasp.json
-          cat .clasp.json
+          npm init -y --silent
+          npm i googleapis@126
 
       - name: Push to Apps Script
-        run: clasp push -f
+        run: node scripts/apps_script_push.js
 
       - name: Cleanup key
         if: always()
-        run: rm -f $HOME/sa.json
+        run: rm -f "$GOOGLE_APPLICATION_CREDENTIALS"
