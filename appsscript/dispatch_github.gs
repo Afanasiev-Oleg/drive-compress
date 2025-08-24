@@ -32,7 +32,48 @@ function triggerGithubForMarked() {
         fileId,
         {sendNotificationEmail:false}
       );
+/** === GitHub Dispatch (single batch) ===
+ * Sends exactly one repository_dispatch with event_type="drive_compress"
+ * files: array of { fileId, action, recommend, estNewSizeMB?, why }
+ */
+function sendRepositoryDispatchBatch_(files) {
+  if (!Array.isArray(files) || files.length === 0) {
+    throw new Error('files[] is empty');
+  }
 
+  // Get token from Script Properties
+  var token = '';
+  try {
+    token = getGithubToken_();
+  } catch (_) {
+    token = PropertiesService.getScriptProperties().getProperty('GH_PAT');
+  }
+  if (!token) throw new Error('Нет Script Property GH_PAT');
+
+  var url = 'https://api.github.com/repos/' + GH_OWNER + '/' + GH_REPO + '/dispatches';
+  var body = {
+    event_type: 'drive_compress',
+    client_payload: { files: files }
+  };
+
+  var resp = UrlFetchApp.fetch(url, {
+    method: 'post',
+    contentType: 'application/json',
+    headers: {
+      'Authorization': 'token ' + token,
+      'Accept': 'application/vnd.github+json',
+      'Content-Type': 'application/json'
+    },
+    payload: JSON.stringify(body),
+    muteHttpExceptions: true
+  });
+
+  var code = resp.getResponseCode();
+  if (code < 200 || code >= 300) {
+    throw new Error('HTTP ' + code + ' ' + resp.getContentText());
+  }
+  return true;
+}
       if (typeof logEvent_ === 'function') logEvent_('dispatch-try', {fileId, name, action: profile});
 
       // 2) вызвать GitHub repository_dispatch
