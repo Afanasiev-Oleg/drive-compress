@@ -22,6 +22,7 @@ function onOpen() {
     .addItem('Экспортировать задачи (CSV)', 'cmdExportCompressionCSV')
     .addItem('Очистить логи', 'cmdClearLogSheet')
     .addItem('Сбросить курсор Range', 'cmdResetRangeCursor')
+    .addItem('Остановить Range-пробивку', 'cmdStopRange')
     .addToUi();
 }
 
@@ -281,6 +282,18 @@ function cmdResetRangeCursor(){
   SpreadsheetApp.getActive().toast('Курсор Range и триггеры очищены', 'Range', 5);
 }
 
+function cmdStopRange(){
+  const props = PropertiesService.getScriptProperties();
+  try {
+    props.setProperty(PROP_RANGE_STOP, '1');
+    deleteTriggersByHandler_('cmdProbeDurationsRange');
+    if (typeof logEvent_ === 'function') logEvent_('range-stop-requested');
+    SpreadsheetApp.getActive().toast('Остановка Range запрошена', 'Range', 5);
+  } catch (e) {
+    SpreadsheetApp.getActive().toast('ERR: '+(e.message||e), 'Range', 5);
+  }
+}
+
 
 /** ---------- Recommend rules & estimates ---------- */
 function recommendProfile_(height, mbpmNum, sizeMB, durSec){
@@ -409,6 +422,18 @@ function cmdProbeDurationsRange() {
   const t0 = Date.now();
   const props = PropertiesService.getScriptProperties();
 
+  // Принудительная остановка по флагу
+  if (props.getProperty(PROP_RANGE_STOP) === '1') {
+    props.deleteProperty(PROP_RANGE_STOP);
+    props.deleteProperty(PROP_RANGE_ROW);
+    props.deleteProperty(PROP_RANGE_SCHEDULED);
+    deleteTriggersByHandler_('cmdProbeDurationsRange');
+    SpreadsheetApp.getActive().toast('Range остановлен по запросу', 'Range', 5);
+    if (typeof logEvent_ === 'function') logEvent_('range-stopped', { detail: 'manual stop' });
+    lock.releaseLock();
+    return;
+  }
+
   // Если это НЕ автопродолжение (нет флага), считаем запуск ручным и начинаем с A2
   const isScheduled = props.getProperty(PROP_RANGE_SCHEDULED) === '1';
   if (!isScheduled) {
@@ -456,6 +481,19 @@ function cmdProbeDurationsRange() {
     const dur    = durs[i];
     const sizeMB = sizeMBs[i];
     const name   = names[i];
+
+    // Принудительная остановка (в ходе прохода)
+    if (props.getProperty(PROP_RANGE_STOP) === '1') {
+      props.deleteProperty(PROP_RANGE_STOP);
+      props.deleteProperty(PROP_RANGE_ROW);
+      props.deleteProperty(PROP_RANGE_SCHEDULED);
+      deleteTriggersByHandler_('cmdProbeDurationsRange');
+      try { sh.getRange(r, COL.Status).setValue('range: stopped'); } catch (_) {}
+      if (typeof logEvent_ === 'function') logEvent_('range-stopped', { detail: 'manual stop mid-loop, row='+r });
+      SpreadsheetApp.getActive().toast('Range остановлен по запросу', 'Range', 5);
+      lock.releaseLock();
+      return;
+    }
 
     if (!fileId) continue;
     if (dur) continue;

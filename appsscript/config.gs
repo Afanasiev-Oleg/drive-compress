@@ -48,6 +48,7 @@ const RANGE_MAX_MS = 270000;                // максимум ~4.5 мин на
 // Продолжение пачек: курсор абсолютной строки и флаг отложенного запуска
 const PROP_RANGE_ROW        = 'RANGE_ROW';          // 2-based (строка A2=2)
 const PROP_RANGE_SCHEDULED  = 'RANGE_SCHEDULED';    // '1' если триггер поставлен
+const PROP_RANGE_STOP       = 'RANGE_STOP';         // '1' если запрошена остановка Range
 
 // ===== Маппинг колонок (1-based) — Порядок ДОЛЖЕН совпадать со шапкой листа Videos =====
 // Path перед Name (как договорено)
