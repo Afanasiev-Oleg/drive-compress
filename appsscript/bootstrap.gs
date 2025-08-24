@@ -71,6 +71,37 @@ function bootstrap() {
   help.setFrozenRows(1);
   help.getRange('A1').setFontWeight('bold').setFontSize(14);
 
+  // Help Dev
+  const helpDev = getOrCreate_(ss, 'Help Dev');
+  helpDev.clear();
+  const txtDev = [
+    'Drive Video Compressor — Developer Help',
+    '',
+    'What & Where',
+    '• Runtime: Google Apps Script bound to this Spreadsheet (custom menu, time triggers).',
+    '• Repository: https://github.com/Afanasiev-Oleg/drive-compress (main branch).',
+    '• Deployment: GitHub Actions (apps_script_deploy.yml) pushes appsscript/* to the Apps Script project (SCRIPT_ID) after merge to main.',
+    '',
+    'Secrets & Config',
+    '• GitHub Actions: SCRIPT_ID, GCP_SA_JSON.',
+    '• Apps Script (Script properties): GH_PAT — GitHub token for repository_dispatch.',
+    '',
+    'How to change code',
+    '1) Edit appsscript/*.gs and/or appsscript.json in a feature branch.',
+    '2) Open PR → merge to main → CI deploys to Apps Script automatically.',
+    '3) Reload the Sheet to see updated menu/actions.',
+    '',
+    'Compression workflow',
+    '• From this Sheet, send tasks via repository_dispatch (event_type=drive_compress); GitHub workflow drive_compress.yml runs ffmpeg and uploads back as a new revision.',
+    '',
+    'Docs',
+    '• See GUIDE.md, PROJECT_CONTEXT.md, CODE_MAPPING.md in the repository.'
+  ];
+  helpDev.getRange(1,1,txtDev.length,1).setValues(txtDev.map(t=>[t]));
+  helpDev.setColumnWidth(1, 980);
+  helpDev.setFrozenRows(1);
+  helpDev.getRange('A1').setFontWeight('bold').setFontSize(14);
+
   // Config
   const cfg = getOrCreate_(ss, 'Config');
   if (cfg.getLastRow() === 0) {
