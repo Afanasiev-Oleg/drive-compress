@@ -2,18 +2,34 @@ name: Drive Compress
 
 on:
   repository_dispatch:
-    types: [drive_compress]   # триггер из Apps Script
+    types: [drive_compress]
+  # опционально для ручного прогона: можно передать JSON массив files[]
   workflow_dispatch:
     inputs:
-      fileId:
-        description: "Drive fileId"
-        required: true
-        type: string
+      files:
+        description: 'JSON array of files[] (ручной тест)'
+        required: false
+        default: '[]'
 
 jobs:
   compress:
     runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        file: ${{ fromJson( github.event_name == 'workflow_dispatch' && inputs.files != '' && inputs.files != '[]'
+                            ? inputs.files
+                            : toJson(github.event.client_payload.files) ) }}
+
     steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate payload
+        run: |
+          echo "Incoming matrix.file: ${{ toJson(matrix.file) }}"
+          test -n "${{ matrix.file.fileId }}" || { echo "client_payload.files[].fileId пустой"; exit 1; }
+
       - name: Install ffmpeg
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
 
@@ -28,9 +44,17 @@ jobs:
       - name: Write SA JSON
         run: echo "${{ secrets.GCP_SA_JSON }}" > sa.json
 
+      - name: Export ENV for current file
+        run: |
+          {
+            echo "FILE_ID=${{ matrix.file.fileId }}";
+            echo "ACTION=${{ matrix.file.action }}";
+            echo "EST_NEW_SIZE_MB=${{ matrix.file.estNewSizeMB }}";
+            echo "RECOMMEND=${{ matrix.file.recommend }}";
+            printf "WHY<<'EOF'\n%s\nEOF\n" "${{ matrix.file.why }}";
+          } >> "$GITHUB_ENV"
+
       - name: Compress & upload new version
-        env:
-          FILE_ID: ${{ github.event.client_payload.fileId || inputs.fileId }}
         run: |
           python - << 'PY'
           import os, io, shlex, subprocess, tempfile, sys
@@ -47,25 +71,28 @@ jobs:
           svc = build('drive','v3',credentials=creds, cache_discovery=False)
 
           with tempfile.TemporaryDirectory() as td:
-              src = os.path.join(td,'in')
-              dst = os.path.join(td,'out.mp4')
-              # 1) download original
-              req = svc.files().get_media(fileId=FILE_ID)
-              with open(src,'wb') as fh:
-                  dl = MediaIoBaseDownload(fh, req)
-                  done = False
-                  while not done:
-                      _, done = dl.next_chunk()
-              # 2) ffmpeg → HEVC 720p/30 CRF=31
-              vf = 'scale=min(iw\\,1280):-2,fps=30'
-              cmd = f'ffmpeg -y -i {shlex.quote(src)} -vf "{vf}" ' \
-                    f'-c:v libx265 -preset slow -crf 31 -pix_fmt yuv420p -tag:v hvc1 ' \
-                    f'-c:a aac -ac 1 -b:a 48k -ar 44100 -movflags +faststart {shlex.quote(dst)}'
-              print("RUN:", cmd, flush=True)
-              if subprocess.run(cmd, shell=True).returncode != 0:
-                  sys.exit("ffmpeg failed")
-              # 3) upload as NEW VERSION (same fileId/link)
-              media = MediaFileUpload(dst, mimetype='video/mp4', resumable=True)
-              svc.files().update(fileId=FILE_ID, media_body=media).execute()
-              print("Updated file:", FILE_ID)
+            src = os.path.join(td,'in')
+            dst = os.path.join(td,'out.mp4')
+
+            # 1) download original
+            req = svc.files().get_media(fileId=FILE_ID)
+            with open(src,'wb') as fh:
+              dl = MediaIoBaseDownload(fh, req)
+              done = False
+              while not done:
+                _, done = dl.next_chunk()
+
+            # 2) ffmpeg → HEVC 720p/30 CRF=31
+            vf = 'scale=min(iw\\,1280):-2,fps=30'
+            cmd = f'ffmpeg -y -i {shlex.quote(src)} -vf "{vf}" ' \
+                  f'-c:v libx265 -preset slow -crf 31 -pix_fmt yuv420p -tag:v hvc1 ' \
+                  f'-c:a aac -ac 1 -b:a 48k -ar 44100 -movflags +faststart {shlex.quote(dst)}'
+            print("RUN:", cmd, flush=True)
+            if subprocess.run(cmd, shell=True).returncode != 0:
+              sys.exit("ffmpeg failed")
+
+            # 3) upload as NEW VERSION (same fileId/link)
+            media = MediaFileUpload(dst, mimetype='video/mp4', resumable=True)
+            svc.files().update(fileId=FILE_ID, media_body=media).execute()
+            print("Updated file:", FILE_ID)
           PY
