@@ -18,9 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        file: ${{ fromJson( github.event_name == 'workflow_dispatch' && inputs.files != '' && inputs.files != '[]'
-                            ? inputs.files
-                            : toJson(github.event.client_payload.files) ) }}
+        file: ${{ fromJson( (github.event_name == 'workflow_dispatch' && inputs.files && inputs.files != '[]') && inputs.files || toJson(github.event.client_payload.files) ) }}
 
     steps:
       - uses: actions/checkout@v4
