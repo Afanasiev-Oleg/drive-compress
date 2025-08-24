@@ -155,3 +155,27 @@ function logEvent_(event, {fileId='', name='', action='', detail='', extra=''} =
     console.log('logEvent_ ERR: ' + (e && e.message || e));
   }
 }
+
+// Включение извлечения Width/Height в режиме Range: читаем Config!B2 (Y/N)
+function isRangeWHEnabled_() {
+  try {
+    const sh = SpreadsheetApp.getActive().getSheetByName(SHEET_CONFIG);
+    if (!sh) return false;
+    const v = String(sh.getRange(2, 2).getValue() || '').trim().toUpperCase();
+    return v === 'Y' || v === 'YES' || v === 'TRUE' || v === 'ON' || v === '1';
+  } catch (_) {
+    return false;
+  }
+}
+
+// Включение извлечения Width/Height в режиме Range: читаем Config!B2 (Y/N)
+function isRangeWHEnabled_() {
+  try {
+    const sh = SpreadsheetApp.getActive().getSheetByName(SHEET_CONFIG);
+    if (!sh) return false;
+    const v = String(sh.getRange(2, 2).getValue() || '').trim().toUpperCase();
+    return v === 'Y' || v === 'YES' || v === 'TRUE' || v === 'ON' || v === '1';
+  } catch (_) {
+    return false;
+  }
+}
