@@ -62,7 +62,41 @@ function cleanupSAPerms(){
   if (!sh) return;
   const lr = sh.getLastRow(); if (lr<2) return;
   const ids = sh.getRange(2, COL.FileId, lr-1, 1).getValues().map(r=>r[0]).filter(Boolean);
+/** === GitHub Dispatch (single batch) === */
+function sendRepositoryDispatchBatch_(files){
+  if (!Array.isArray(files) || files.length === 0) throw new Error('files[] is empty');
+  // GH token from Script Properties
+  var token = '';
+  try {
+    token = getGithubToken_();
+  } catch (e) {
+    // fallback to direct read for clarity
+    token = PropertiesService.getScriptProperties().getProperty('GH_PAT');
+  }
+  if (!token) throw new Error('Нет Script Property GH_PAT');
 
+  var url = 'https://api.github.com/repos/' + GH_OWNER + '/' + GH_REPO + '/dispatches';
+  var body = {
+    event_type: 'drive_compress',
+    client_payload: { files: files }
+  };
+  var resp = UrlFetchApp.fetch(url, {
+    method: 'post',
+    contentType: 'application/json',
+    headers: {
+      'Authorization': 'token ' + token,
+      'Accept': 'application/vnd.github+json',
+      'Content-Type': 'application/json'
+    },
+    payload: JSON.stringify(body),
+    muteHttpExceptions: true
+  });
+  var code = resp.getResponseCode();
+  if (code < 200 || code >= 300) {
+    throw new Error('HTTP ' + code + ' ' + resp.getContentText());
+  }
+  return true;
+}
   ids.forEach(fileId=>{
     try{
       const perms = Drive.Permissions.list(fileId).items || [];

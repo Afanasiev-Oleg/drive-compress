@@ -23,6 +23,7 @@ function onOpen() {
     .addItem('Очистить логи', 'cmdClearLogSheet')
     .addItem('Сбросить курсор Range', 'cmdResetRangeCursor')
     .addItem('Остановить Range-пробивку', 'cmdStopRange')
+    .addItem('Отправить задачи в GitHub Actions', 'cmdRepositoryDispatchBatch')
     .addToUi();
 }
 
@@ -267,6 +268,64 @@ function cmdExportCompressionCSV(){
     logEvent_('csv-export', { name: file.getName(), detail: file.getUrl(), extra: 'rows='+exported });
   }
   SpreadsheetApp.getUi().alert('CSV создан: '+file.getUrl());
+}
+
+function cmdRepositoryDispatchBatch(){
+  const sh = SpreadsheetApp.getActive().getSheetByName(SHEET_VIDEOS);
+  if (!sh) return;
+  const lr = sh.getLastRow();
+  if (lr < 2) { SpreadsheetApp.getActive().toast('Нет задач для отправки', 'GitHub', 5); return; }
+
+  try {
+    const data = sh.getRange(2, 1, lr - 1, COL.Status).getValues();
+    const files = [];
+    const rowIdxs = [];
+    for (let i = 0; i < data.length; i++) {
+      if (files.length >= 20) break;
+      const row = data[i];
+      const fileId = String(row[COL.FileId-1] || '').trim();
+      let act = String(row[COL.Action-1] || '').trim();
+      if (!fileId) continue;
+      // normalize action
+      if (act === 'compress_normal') act = 'normal';
+      if (act === 'compress_aggressive') act = 'aggressive';
+      if (act !== 'normal' && act !== 'aggressive') continue;
+
+      const recommend = String(row[COL.Recommend-1] || '').trim();
+      const estRaw = row[COL.EstNewSizeMB-1];
+      const estNum = Number(estRaw);
+      const why = String(row[COL.Why-1] || '').trim();
+
+      const item = { fileId: fileId, action: act, recommend: recommend, why: why };
+      if (isFinite(estNum)) item.estNewSizeMB = estNum;
+
+      files.push(item);
+      rowIdxs.push(2 + i); // absolute row number in sheet
+    }
+
+    if (!files.length) {
+      SpreadsheetApp.getActive().toast('Нет подходящих задач для отправки', 'GitHub', 5);
+      return;
+    }
+
+    // send one batch
+    sendRepositoryDispatchBatch_(files);
+
+    // optionally mark dispatched
+    try {
+      rowIdxs.forEach(r => sh.getRange(r, COL.Status).setValue('dispatched'));
+    } catch (_) {}
+
+    if (typeof logEvent_ === 'function') {
+      logEvent_('dispatch-batch', { detail: 'count=' + files.length });
+    }
+    SpreadsheetApp.getActive().toast('Отправлено: ' + files.length, 'GitHub', 5);
+  } catch (e) {
+    if (typeof logEvent_ === 'function') {
+      logEvent_('dispatch-error', { detail: String(e && e.message || e) });
+    }
+    SpreadsheetApp.getActive().toast('ERR: ' + (e && e.message || e), 'GitHub', 7);
+  }
 }
 
 function cmdClearLogSheet(){
