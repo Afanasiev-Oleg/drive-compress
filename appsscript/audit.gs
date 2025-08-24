@@ -215,8 +215,10 @@ function cmdCheckRevisions() {
     try {
       const revs = Drive.Revisions.list(fileId, {fields:'revisions(id,keepForever,modifiedTime)'}).revisions || [];
       sh.getRange(2+idx, COL.HasOldRevisions).setValue(revs.length>1?'Y':'');
+      if (typeof logEvent_ === 'function') logEvent_('revisions-check', { fileId: fileId, detail: 'count=' + revs.length });
     } catch(e){
       sh.getRange(2+idx, COL.Status).setValue('REV ERR: '+e.message);
+      if (typeof logEvent_ === 'function') logEvent_('revisions-check-err', { fileId: fileId, detail: String(e && e.message || e) });
     }
   });
 }
@@ -235,21 +237,19 @@ function cmdDeleteMarkedRevisions() {
     if (!fileId || !hasOld || !markDel) continue;
     try {
       const opt = { supportsAllDrives: true, supportsTeamDrives: true };
-      const listOpt = { fields:'revisions(id,keepForever,modifiedTime,modifiedDate)', supportsAllDrives:true, supportsTeamDrives:true };
+      const listOpt = { fields:'revisions(id,keepForever,modifiedTime)', supportsAllDrives:true, supportsTeamDrives:true };
 
       if (typeof logEvent_ === 'function') logEvent_('revisions-start', { fileId: fileId });
 
-      // 1) Получить список ревизий (универсально: v3.revisions или v2.items)
+      // 1) Получить список ревизий
       var resp = Drive.Revisions.list(fileId, listOpt) || {};
       var revs = resp.revisions || resp.items || [];
       if (revs.length > 1) {
-        // Сортируем по времени (старые → новые), поддержка modifiedTime (v3) и modifiedDate (v2)
+        // Сортируем по времени (старые → новые) по modifiedTime (если нет — считаем 0)
         revs.sort(function(a,b){
-          function ts(x){
-            var t = x.modifiedTime || x.modifiedDate || '';
-            return t ? new Date(t).getTime() : 0;
-          }
-          return ts(a) - ts(b);
+          var ta = a.modifiedTime ? new Date(a.modifiedTime).getTime() : 0;
+          var tb = b.modifiedTime ? new Date(b.modifiedTime).getTime() : 0;
+          return ta - tb;
         });
         // оставляем самую свежую (последнюю)
         const lastIdx = revs.length - 1;
@@ -267,12 +267,12 @@ function cmdDeleteMarkedRevisions() {
             Drive.Revisions.delete(fileId, rev.id, opt);
             if (typeof logEvent_ === 'function') logEvent_('revisions-del', { fileId: fileId, rev: rev.id });
           } catch (eDel) {
-            // продолжаем попытки для остальных
+            if (typeof logEvent_ === 'function') logEvent_('revisions-err', { fileId: fileId, detail: String(eDel && eDel.message || eDel) });
           }
         }
       }
 
-      // 2) Повторная проверка (универсально)
+      // 2) Повторная проверка
       var resp2 = Drive.Revisions.list(fileId, listOpt) || {};
       var after = resp2.revisions || resp2.items || [];
       var afterCount = Math.max(0, after.length - 1);
@@ -284,6 +284,7 @@ function cmdDeleteMarkedRevisions() {
       if (typeof logEvent_ === 'function') logEvent_('revisions-done', { fileId: fileId, left: afterCount });
     } catch(e){
       sh.getRange(2+i, COL.Status).setValue('DEL ERR: '+e.message);
+      if (typeof logEvent_ === 'function') logEvent_('revisions-err', { fileId: fileId, detail: String(e && e.message || e) });
     }
   }
 }
