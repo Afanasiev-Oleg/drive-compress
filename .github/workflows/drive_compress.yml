@@ -49,7 +49,7 @@ jobs:
             echo "ACTION=${{ matrix.file.action }}";
             echo "EST_NEW_SIZE_MB=${{ matrix.file.estNewSizeMB }}";
             echo "RECOMMEND=${{ matrix.file.recommend }}";
-            printf "WHY<<'EOF'\n%s\nEOF\n" "${{ matrix.file.why }}";
+            echo "WHY=${{ matrix.file.why }}";
           } >> "$GITHUB_ENV"
 
       - name: Compress & upload new version
