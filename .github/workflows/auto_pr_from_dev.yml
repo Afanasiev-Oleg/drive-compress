@@ -1,0 +1,61 @@
+name: Auto PR dev → main
+
+on:
+  push:
+    branches: ["dev"]
+  workflow_dispatch:
+    inputs:
+      head:
+        description: "Source branch (e.g., dev or owner:dev)"
+        required: true
+        default: "dev"
+      base:
+        description: "Target branch"
+        required: true
+        default: "main"
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  autopr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Open PR (head → base) if not exists
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            let base = core.getInput('base') || 'main';
+            let headInput = core.getInput('head') || 'dev';
+
+            if (context.eventName === 'push') {
+              const branch = (context.ref || '').replace('refs/heads/', '');
+              headInput = `${owner}:${branch}`; // push from dev due to trigger
+            } else {
+              headInput = headInput.includes(':') ? headInput : `${owner}:${headInput}`;
+            }
+
+            core.info(`Resolved head=${headInput}, base=${base}, event=${context.eventName}`);
+
+            const { data: pulls } = await github.rest.pulls.list({
+              owner, repo, state: "open", head: headInput, base, per_page: 100
+            });
+            if (pulls.length > 0) {
+              core.info(`PR already open: #${pulls[0].number} ${pulls[0].html_url}`);
+              return;
+            }
+
+            const title = `Auto PR: ${headInput.split(':')[1]} → ${base}`;
+            const body = [
+              `Автоматический PR из \`${headInput}\` в \`${base}\`.`,
+              `Событие: ${context.eventName}`,
+              `Коммит: ${context.sha}`
+            ].join("\n");
+
+            const { data: pr } = await github.rest.pulls.create({
+              owner, repo, head: headInput, base, title, body, maintainer_can_modify: true
+            });
+            core.notice(`Opened PR #${pr.number}: ${pr.html_url}`);
