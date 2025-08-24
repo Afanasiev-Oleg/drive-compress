@@ -40,7 +40,17 @@ jobs:
         run: pip install google-api-python-client google-auth google-auth-httplib2 google-auth-oauthlib
 
       - name: Write SA JSON
-        run: echo "${{ secrets.GCP_SA_JSON }}" > sa.json
+        shell: bash
+        run: |
+          cat > sa.json <<'JSON'
+          ${{ secrets.GCP_SA_JSON }}
+          JSON
+
+      - name: Validate SA JSON
+        run: |
+          python - <<'PY'
+          import json; json.load(open('sa.json')); print('SA JSON OK')
+          PY
 
       - name: Export ENV for current file
         run: |
