@@ -262,6 +262,10 @@ function cmdExportCompressionCSV(){
   });
   const csv = rows.map(row=>row.map(c=>`"${String(c||'').replace(/"/g,'""')}"`).join(',')).join('\n');
   const file = DriveApp.createFile(Utilities.newBlob(csv,'text/csv','compress_tasks.csv'));
+  if (typeof logEvent_ === 'function') {
+    const exported = Math.max(0, rows.length - 1); // exclude header
+    logEvent_('csv-export', { name: file.getName(), detail: file.getUrl(), extra: 'rows='+exported });
+  }
   SpreadsheetApp.getUi().alert('CSV создан: '+file.getUrl());
 }
 
