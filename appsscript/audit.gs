@@ -543,7 +543,9 @@ function cmdProbeDurationsRange() {
         try {
           var curW = Number(sh.getRange(r, COL.Width).getValue() || 0);
           var curH = Number(sh.getRange(r, COL.Height).getValue() || 0);
-          if ((!curW || !curH) && Array.isArray(dbg)) {
+          var needWH = (!curW || !curH);
+          var gotWH = false;
+          if (needWH && Array.isArray(dbg)) {
             var whMsg = dbg.find(function(s){ return (typeof s === 'string') && s.indexOf('wh=') === 0; });
             if (whMsg) {
               var m = whMsg.match(/^wh=(\d+)x(\d+)$/);
@@ -552,10 +554,14 @@ function cmdProbeDurationsRange() {
                 if (ww > 0 && hh > 0) {
                   sh.getRange(r, COL.Width).setValue(ww);
                   sh.getRange(r, COL.Height).setValue(hh);
+                  gotWH = true;
                   if (typeof logEvent_ === 'function') logEvent_('wh-range', { fileId: fileId, name: name, detail: ww + 'x' + hh });
                 }
               }
             }
+          }
+          if (needWH && !gotWH && typeof logEvent_ === 'function') {
+            logEvent_('wh-range-miss', { fileId: fileId, name: name, detail: 'no WH via Range @' + where });
           }
         } catch(_) {}
       }
@@ -823,7 +829,7 @@ function parseMp4Duration_(bytes, dbg) {
 
 function parseMoovForDuration_(bytes, start, end) {
   let off = start;
-  if (false) {
+      if (isRangeWHEnabled_()) {
     try {
       const wh = parseMoovForWH_(bytes, start, end);
       if (wh && dbg) dbg.push(`wh=${wh.w}x${wh.h}`);
