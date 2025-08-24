@@ -539,7 +539,7 @@ function cmdProbeDurationsRange() {
       sh.getRange(r, COL.EstNewSizeMB).setValue(est);
       sh.getRange(r, COL.EstSavingsMB).setValue(save);
 
-      if (false) {
+      if (isRangeWHEnabled_()) {
         try {
           var curW = Number(sh.getRange(r, COL.Width).getValue() || 0);
           var curH = Number(sh.getRange(r, COL.Height).getValue() || 0);
@@ -763,7 +763,7 @@ function parseMp4Duration_(bytes, dbg) {
     if (size < hdr || off + size > len) break;
 
     if (type === 'moov') {
-      if (false) {
+      if (isRangeWHEnabled_()) {
         try {
           var wh1 = parseMoovForWH_(bytes, off + hdr, off + size);
           if (wh1 && dbg) dbg.push('wh=' + wh1.w + 'x' + wh1.h);
@@ -782,7 +782,7 @@ function parseMp4Duration_(bytes, dbg) {
   // --- 2) RESYNC: ищем moov "в середине" буфера ---
   const moov = scanForAtom_(bytes, 0, len, 'moov');
   if (moov) {
-    if (false) {
+    if (isRangeWHEnabled_()) {
       try {
         var wh2 = parseMoovForWH_(bytes, moov.payloadStart, moov.atomEnd);
         if (wh2 && dbg) dbg.push('wh=' + wh2.w + 'x' + wh2.h);

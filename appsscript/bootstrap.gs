@@ -16,6 +16,11 @@ function bootstrap() {
     '• Лист Config → колонка A (FolderId). По одному ID папки в строке. Обход рекурсивный.',
     '• Как взять FolderId: откройте папку в браузере и скопируйте часть URL после /folders/…',
     '',
+    'Настройки Range',
+    '• Лист Config → колонка B: "Extract WH via Range (Y/N)".',
+    '  – Если Y: в процессе Range дополнительно извлекаются Width/Height (когда удаётся найти их в moov).',
+    '  – По умолчанию N (выключено) ради скорости и экономии трафика.',
+    '',
     'Как работать (5 шагов)',
     '1) Обновить список (v3 list). Находит все видео, заполняет кликабельные Path/Name, размер, дату.',
     '2) Добрать длительность — сначала «(v3 get)». Это быстрый запрос метаданных Drive:',
@@ -73,6 +78,12 @@ function bootstrap() {
     cfg.getRange('A2').setNote('ID папок Drive для сканирования, по одному в строку');
   }
   cfg.setColumnWidths(1, 1, 520);
+
+  // Добавим флаг конфигурации (B-колонка): извлекать Width/Height при Range (Y/N)
+  cfg.getRange('B1').setValue('Extract WH via Range (Y/N)');
+  if (!String(cfg.getRange('B2').getValue() || '').trim()) {
+    cfg.getRange('B2').setValue('N');
+  }
 
   // Videos
   const sh = getOrCreate_(ss, 'Videos');
