@@ -234,14 +234,50 @@ function cmdDeleteMarkedRevisions() {
     const markDel= String(row[COL.MarkDeleteRevisions-1]||'')==='Y';
     if (!fileId || !hasOld || !markDel) continue;
     try {
-      const revs = Drive.Revisions.list(fileId, {fields:'revisions(id,keepForever,modifiedTime)'}).revisions || [];
-      if (revs.length>1){
-        revs.sort((a,b)=> new Date(a.modifiedTime)-new Date(b.modifiedTime));
-        for (let r=0;r<revs.length-1;r++){
-          if (!revs[r].keepForever) Drive.Revisions.delete(fileId, revs[r].id);
+      const opt = { supportsAllDrives: true, supportsTeamDrives: true };
+      const listOpt = { fields:'revisions(id,keepForever,modifiedTime)', supportsAllDrives:true, supportsTeamDrives:true };
+
+      if (typeof logEvent_ === 'function') logEvent_('revisions-start', { fileId: fileId });
+
+      // 1) Получить список ревизий
+      let revs = Drive.Revisions.list(fileId, listOpt).revisions || [];
+      if (revs.length > 1) {
+        // Сортируем по времени (старые → новые)
+        revs.sort(function(a,b){
+          const ta = a.modifiedTime ? new Date(a.modifiedTime).getTime() : 0;
+          const tb = b.modifiedTime ? new Date(b.modifiedTime).getTime() : 0;
+          return ta - tb;
+        });
+        // оставляем самую свежую (последнюю)
+        const lastIdx = revs.length - 1;
+
+        for (let r = 0; r < revs.length; r++) {
+          if (r === lastIdx) continue; // пропускаем самую свежую
+          const rev = revs[r];
+          try {
+            // если ревизия закреплена (pinned/keepForever), сначала снять
+            if (rev.keepForever === true) {
+              Drive.Revisions.update({ keepForever: false }, fileId, rev.id, opt);
+              if (typeof logEvent_ === 'function') logEvent_('revisions-unpin', { fileId: fileId, rev: rev.id });
+            }
+            // удалить ревизию
+            Drive.Revisions.delete(fileId, rev.id, opt);
+            if (typeof logEvent_ === 'function') logEvent_('revisions-del', { fileId: fileId, rev: rev.id });
+          } catch (eDel) {
+            // продолжаем попытки для остальных; статус ошибки запишем ниже
+          }
         }
       }
-      sh.getRange(2+i, COL.Status).setValue('Revisions deleted');
+
+      // 2) Повторная проверка
+      const after = Drive.Revisions.list(fileId, listOpt).revisions || [];
+      const afterCount = Math.max(0, after.length - 1);
+      if (after.length <= 1) {
+        sh.getRange(2+i, COL.Status).setValue('Revisions deleted');
+      } else {
+        sh.getRange(2+i, COL.Status).setValue('Revisions not deleted (remain: ' + afterCount + ')');
+      }
+      if (typeof logEvent_ === 'function') logEvent_('revisions-done', { fileId: fileId, left: afterCount });
     } catch(e){
       sh.getRange(2+i, COL.Status).setValue('DEL ERR: '+e.message);
     }
