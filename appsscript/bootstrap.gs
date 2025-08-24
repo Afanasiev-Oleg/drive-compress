@@ -89,7 +89,7 @@ function bootstrap() {
     'How to change code',
     '1) Edit appsscript/*.gs and/or appsscript.json in a feature branch.',
     '2) Open PR → merge to main → CI deploys to Apps Script automatically.',
-    '3) Reload the Sheet to see updated menu/actions.',
+    '3) Reload the Sheet to see updated menu/actions; if sheets/help are missing (fresh setup), run bootstrap() once in Apps Script to recreate them.',
     '',
     'Compression workflow',
     '• From this Sheet, send tasks via repository_dispatch (event_type=drive_compress); GitHub workflow drive_compress.yml runs ffmpeg and uploads back as a new revision.',
