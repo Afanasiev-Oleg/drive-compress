@@ -74,7 +74,7 @@ function bootstrap() {
   // Config
   const cfg = getOrCreate_(ss, 'Config');
   if (cfg.getLastRow() === 0) {
-    cfg.getRange('A1').setValue('FolderId');
+    cfg.getRange('A1').setValue('Folder ID');
     cfg.getRange('A2').setNote('ID папок Drive для сканирования, по одному в строку');
   }
   cfg.setColumnWidths(1, 1, 520);
@@ -84,6 +84,8 @@ function bootstrap() {
   if (!String(cfg.getRange('B2').getValue() || '').trim()) {
     cfg.getRange('B2').setValue('N');
   }
+  // Оформление заголовка (жирный, по центру)
+  cfg.getRange('A1:B1').setFontWeight('bold').setHorizontalAlignment('center');
 
   // Videos
   const sh = getOrCreate_(ss, 'Videos');

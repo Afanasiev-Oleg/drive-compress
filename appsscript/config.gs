@@ -132,9 +132,11 @@ function ensureLogSheet_() {
   let sh = ss.getSheetByName(SHEET_LOG);
   if (!sh) {
     sh = ss.insertSheet(SHEET_LOG);
-    sh.appendRow(['Time','Event','FileId','Name','Action','Detail','Extra']);
+    sh.appendRow(['Time','Event','File ID','Name','Action','Detail','Extra']);
     sh.setFrozenRows(1);
     sh.setColumnWidths(1, 7, 220);
+    // Оформление заголовка (жирный, по центру)
+    sh.getRange(1, 1, 1, 7).setFontWeight('bold').setHorizontalAlignment('center');
   }
   return sh;
 }
