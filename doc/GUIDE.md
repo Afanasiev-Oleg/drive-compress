@@ -88,8 +88,8 @@ appsscript/
 3. Для каждого элемента `files[]`:
    - скачивает оригинал по `fileId`;
    - применяет профиль:
-     - **normal:** `-c:v libx265 -crf 28 -preset medium -vf "scale='min(1280,iw)':-2" -c:a aac -b:a 96k -movflags +faststart`
-     - **aggressive:** `-c:v libx265 -crf 30 -preset medium -vf "scale='min(1280,iw)':-2" -c:a aac -b:a 96k -movflags +faststart`
+     - **normal:** `-c:v libx265 -crf 23 -preset slow -vf "scale='min(1920,iw)':'min(1080,ih)':force_original_aspect_ratio=decrease:force_divisible_by=2" -c:a aac -b:a 128k -movflags +faststart -pix_fmt yuv420p -tag:v hvc1`
+     - **aggressive:** `-c:v libx265 -crf 32 -preset medium -vf "scale='min(960,iw)':'min(960,ih)':force_original_aspect_ratio=decrease:force_divisible_by=2" -r 30 -c:a aac -b:a 96k -movflags +faststart -pix_fmt yuv420p -tag:v hvc1`
    - загружает обратно **в тот же `fileId`** (через ревизии).
 4. В логах шагов видны `fileId`, профиль и размеры до/после.
 
