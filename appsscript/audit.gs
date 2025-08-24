@@ -264,7 +264,7 @@ function cmdDeleteMarkedRevisions() {
               if (typeof logEvent_ === 'function') logEvent_('revisions-unpin', { fileId: fileId, rev: rev.id });
             }
             // удалить ревизию
-            Drive.Revisions.delete(fileId, rev.id, opt);
+            Drive.Revisions.remove(fileId, rev.id);
             if (typeof logEvent_ === 'function') logEvent_('revisions-del', { fileId: fileId, rev: rev.id });
           } catch (eDel) {
             if (typeof logEvent_ === 'function') logEvent_('revisions-err', { fileId: fileId, detail: String(eDel && eDel.message || eDel) });
