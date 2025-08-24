@@ -73,6 +73,7 @@ jobs:
           SA_PATH='sa.json'
           SCOPES=['https://www.googleapis.com/auth/drive']
           FILE_ID=os.environ.get('FILE_ID')
+          ACTION=(os.environ.get('ACTION') or '').strip()
           assert FILE_ID, "FILE_ID missing"
 
           creds = service_account.Credentials.from_service_account_file(SA_PATH, scopes=SCOPES)
@@ -90,11 +91,20 @@ jobs:
               while not done:
                 _, done = dl.next_chunk()
 
-            # 2) ffmpeg → HEVC 720p/30 CRF=31
-            vf = 'scale=min(iw\\,1280):-2,fps=30'
-            cmd = f'ffmpeg -y -i {shlex.quote(src)} -vf "{vf}" ' \
-                  f'-c:v libx265 -preset slow -crf 31 -pix_fmt yuv420p -tag:v hvc1 ' \
-                  f'-c:a aac -ac 1 -b:a 48k -ar 44100 -movflags +faststart {shlex.quote(dst)}'
+            # 2) ffmpeg profiles (HEVC)
+            if ACTION == 'aggressive':
+              # AGGRESSIVE — максимально компактно
+              vf = "scale='min(960,iw)':'min(960,ih)':force_original_aspect_ratio=decrease:force_divisible_by=2"
+              cmd = f'ffmpeg -y -i {shlex.quote(src)} -vf "{vf}" -r 30 ' \
+                    f'-c:v libx265 -crf 32 -preset medium -pix_fmt yuv420p -tag:v hvc1 ' \
+                    f'-c:a aac -b:a 96k -movflags +faststart {shlex.quote(dst)}'
+            else:
+              # NORMAL — архив/избранное (почти как оригинал)
+              vf = "scale='min(1920,iw)':'min(1080,ih)':force_original_aspect_ratio=decrease:force_divisible_by=2"
+              cmd = f'ffmpeg -y -i {shlex.quote(src)} -vf "{vf}" ' \
+                    f'-c:v libx265 -crf 23 -preset slow -pix_fmt yuv420p -tag:v hvc1 ' \
+                    f'-c:a aac -b:a 128k -movflags +faststart {shlex.quote(dst)}'
+
             print("RUN:", cmd, flush=True)
             if subprocess.run(cmd, shell=True).returncode != 0:
               sys.exit("ffmpeg failed")
