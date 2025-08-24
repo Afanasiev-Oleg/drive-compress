@@ -60,7 +60,11 @@ function cmdRefresh() {
   const folderIds = readFolderIds_();
   const files = [];
   const seen = {};
-  for (let i = 0; i < folderIds.length; i++) listVideosRecursiveV3_(folderIds[i], files, seen);
+  const recursive = isRecursiveScanEnabled_();
+  for (let i = 0; i < folderIds.length; i++) {
+    if (recursive) listVideosRecursiveV3_(folderIds[i], files, seen);
+    else           listVideosSingleFolderV3_(folderIds[i], files, seen);
+  }
 
   const rows = files.map(f => {
     const sizeMB = f.size ? (Number(f.size)/(1024*1024)) : '';
@@ -371,6 +375,13 @@ function listVideosRecursiveV3_(folderId, out, seen){
     .forEach(f=>{ if (!seen[f.id]){ seen[f.id]=true; out.push(f); } });
   const qFolders = `'${folderId}' in parents and trashed=false and mimeType = 'application/vnd.google-apps.folder'`;
   driveV3List_(qFolders, 'id,name,parents').forEach(fd=> listVideosRecursiveV3_(fd.id, out, seen));
+}
+
+// Нерекурсивный обход: только файлы в заданной папке (без подпапок)
+function listVideosSingleFolderV3_(folderId, out, seen){
+  const qFiles = `'${folderId}' in parents and trashed=false and mimeType contains 'video/'`;
+  driveV3List_(qFiles, 'id,name,parents,mimeType,size,modifiedTime,videoMediaMetadata(width,height,durationMillis)')
+    .forEach(f=>{ if (!seen[f.id]){ seen[f.id]=true; out.push(f); } });
 }
 
 // Человеческий путь (кэш по папкам)

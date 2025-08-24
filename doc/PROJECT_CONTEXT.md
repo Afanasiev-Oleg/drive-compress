@@ -24,7 +24,8 @@
 ## 2) Текущее состояние: компоненты
 
 ### Google Таблица (лист **Videos** и др.)
-- Листы: **Config, Videos, Log, Help**.
+- Листы: **Config, Videos, Log, Help, Help Dev**.
+- **Config**: A — FolderId; B — Extract WH via Range (Y/N); C — Recursive Scan (Y/N, по умолчанию N → только текущая папка).
 - **Videos** колонки (человекочитаемые; *MBperMin остаётся технической*):
   - File ID | Path | Name | MIME Type | Size MB | Duration Sec | **MBperMin** | Width | Height | Modified Time | Need Compress | Has Old Revisions | Recommend | Why | Action | Est. New Size MB | Est. Savings MB | Delete Old Revisions (Y/N) | Status
 - **Config**: в колонке A — FolderId целевых папок (из URL после `/folders/`).  
