@@ -405,20 +405,20 @@ function cmdStopRange(){
 
 /** ---------- Recommend rules & estimates ---------- */
 function recommendProfile_(height, mbpmNum, sizeMB, durSec){
-  if (height && Number(height) > AGGR_HEIGHT) return 'aggressive';
-  if (mbpmNum!=='' && Number(mbpmNum) >= MBPM_AGGR_MIN) return 'aggressive';
-
-  if (height && Number(height) > NORMAL_HEIGHT) return 'normal';
+  // 1) Приоритет — по MB/мин
+  if (mbpmNum!=='' && Number(mbpmNum) >= MBPM_AGGR_MIN)  return 'aggressive';
   if (mbpmNum!=='' && Number(mbpmNum) >= MBPM_NORMAL_MIN) return 'normal';
 
+  // 2) Если длительность неизвестна — эвристики по размеру
   if (!durSec && sizeMB){
-    if (Number(sizeMB) >= UNKNOWN_SIZE_THRESHOLD_AGGR_MB) return 'aggressive';
+    if (Number(sizeMB) >= UNKNOWN_SIZE_THRESHOLD_AGGR_MB)  return 'aggressive';
     if (Number(sizeMB) >= UNKNOWN_SIZE_THRESHOLD_NORMAL_MB) return 'normal';
   }
 
-  if (mbpmNum!=='' && Number(mbpmNum) < MBPM_SKIP_MAX) return 'skip';
-  if (height && Number(height) <= NORMAL_HEIGHT && (mbpmNum==='' || Number(mbpmNum) < MBPM_NORMAL_MIN)) return 'skip';
+  // 3) Явный skip для низких MB/мин
+  if (mbpmNum!=='' && Number(mbpmNum) < MBPM_NORMAL_MIN) return 'skip';
 
+  // 4) По умолчанию
   return 'normal';
 }
 
@@ -1167,8 +1167,10 @@ function setupFormattingAndValidation_(sh){
 
 /** ---------- Legacy helper ---------- */
 function decideNeedCompress_(height, mbPerMin, sizeMB, durSec) {
-  if (height && Number(height) > NORMAL_HEIGHT) return true;
+  // Решение — по MB/мин; высота сама по себе не триггерит необходимость
   if (mbPerMin!=='' && Number(mbPerMin) >= MBPM_NORMAL_MIN) return true;
+
+  // Если длительность неизвестна — используем пороги по размеру
   if ((!durSec || durSec==='') && sizeMB){
     if (Number(sizeMB) >= UNKNOWN_SIZE_THRESHOLD_NORMAL_MB) return true;
   }
