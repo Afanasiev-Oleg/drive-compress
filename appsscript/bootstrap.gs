@@ -13,7 +13,8 @@ function bootstrap() {
     '• Сама таблица не сжимает файлы — вы лишь получаете список и (опционально) запускаете внешнюю обработку.',
     '',
     'Где указать, что сканировать',
-    '• Лист Config → колонка A (FolderId). По одному ID папки в строке. Обход рекурсивный.',
+    '• Лист Config → колонка A (FolderId). По одному ID папки в строке.',
+    '• Рекурсивность: колонка C "Recursive Scan (Y/N)". По умолчанию N — смотрим только указанную папку; Y — обходим подпапки.',
     '• Как взять FolderId: откройте папку в браузере и скопируйте часть URL после /folders/…',
     '',
     'Настройки Range',
@@ -85,6 +86,7 @@ function bootstrap() {
     'Secrets & Config',
     '• GitHub Actions: SCRIPT_ID, GCP_SA_JSON.',
     '• Apps Script (Script properties): GH_PAT — GitHub token for repository_dispatch.',
+    '• Sheet Config: C "Recursive Scan (Y/N)" — OFF by default (scan only given folders); Y enables recursive traversal.',
     '',
     'How to change code',
     '1) Edit appsscript/*.gs and/or appsscript.json in a feature branch.',
@@ -115,8 +117,13 @@ function bootstrap() {
   if (!String(cfg.getRange('B2').getValue() || '').trim()) {
     cfg.getRange('B2').setValue('N');
   }
+  // Добавим флаг рекурсивного обхода (C-колонка): Recursive Scan (Y/N)
+  cfg.getRange('C1').setValue('Recursive Scan (Y/N)');
+  if (!String(cfg.getRange('C2').getValue() || '').trim()) {
+    cfg.getRange('C2').setValue('N');
+  }
   // Оформление заголовка (жирный, по центру)
-  cfg.getRange('A1:B1').setFontWeight('bold').setHorizontalAlignment('center');
+  cfg.getRange('A1:C1').setFontWeight('bold').setHorizontalAlignment('center');
 
   // Videos
   const sh = getOrCreate_(ss, 'Videos');
