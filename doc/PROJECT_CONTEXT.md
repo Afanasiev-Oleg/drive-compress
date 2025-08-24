@@ -8,6 +8,7 @@
 
 - Репозиторий: **Afanasiev-Oleg/drive-compress**
 - Основная ветка: **main**
+- Ветка разработки: **dev** (при push в dev создаётся авто‑PR в main — см. `.github/workflows/auto_pr_from_dev.yml`)
 - RAW-база (HEAD): `https://raw.githubusercontent.com/Afanasiev-Oleg/drive-compress/refs/heads/main/`
 - Целевой проект Apps Script: `SCRIPT_ID` (секрет GitHub Actions)
 - Service Account (пример): `drive-compressor@drive-video-compressor.iam.gserviceaccount.com`

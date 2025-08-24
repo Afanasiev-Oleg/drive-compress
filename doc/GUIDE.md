@@ -116,6 +116,22 @@ curl -H "Authorization: token <GH_PAT>" \
 
 ---
 
+## 7) Авто‑PR из dev в main
+
+В репозитории настроен workflow `.github/workflows/auto_pr_from_dev.yml`, который:
+- срабатывает на `push` в ветку `dev` и на ручной `workflow_dispatch`;
+- проверяет, открыт ли уже PR с `head=dev` → `base=main`;
+- если PR уже открыт — ничего не делает; если нет — создаёт PR с заголовком `Auto PR: dev → main`.
+
+Права: достаточно встроенного `GITHUB_TOKEN` с `pull-requests: write`.
+
+Как проверить:
+1) Сделайте любой коммит в `dev` и выполните `git push`.
+2) Откройте вкладку Actions — увидите запуск `auto_pr_from_dev`.
+3) В Pull requests появится авто‑PR (если ранее не был открыт).
+
+---
+
 ## 6) Типовые проблемы и их решение
 
 - **403 Apps Script API / “User has not enabled the Apps Script API”**  
