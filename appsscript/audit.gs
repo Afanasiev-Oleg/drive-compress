@@ -235,7 +235,7 @@ function cmdDeleteMarkedRevisions() {
     if (!fileId || !hasOld || !markDel) continue;
     try {
       const opt = { supportsAllDrives: true, supportsTeamDrives: true };
-      const listOpt = { fields:'revisions(id,keepForever,pinned,modifiedTime,modifiedDate)', supportsAllDrives:true, supportsTeamDrives:true };
+      const listOpt = { fields:'revisions(id,keepForever,modifiedTime,modifiedDate)', supportsAllDrives:true, supportsTeamDrives:true };
 
       if (typeof logEvent_ === 'function') logEvent_('revisions-start', { fileId: fileId });
 
@@ -258,9 +258,9 @@ function cmdDeleteMarkedRevisions() {
           if (r === lastIdx) continue; // пропускаем самую свежую
           const rev = revs[r];
           try {
-            // если ревизия закреплена (pinned/keepForever), сначала снять
-            if (rev.keepForever === true || rev.pinned === true) {
-              Drive.Revisions.update({ keepForever: false, pinned: false }, fileId, rev.id, opt);
+            // если ревизия закреплена (keepForever), сначала снять
+            if (rev.keepForever === true) {
+              Drive.Revisions.update({ keepForever: false }, fileId, rev.id, opt);
               if (typeof logEvent_ === 'function') logEvent_('revisions-unpin', { fileId: fileId, rev: rev.id });
             }
             // удалить ревизию
