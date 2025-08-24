@@ -2,7 +2,7 @@
 function bootstrap() {
   const ss = SpreadsheetApp.getActive();
 
-  // Help - test commit 4
+  // Help
   const help = getOrCreate_(ss, 'Help');
   help.clear();
   const txt = [
