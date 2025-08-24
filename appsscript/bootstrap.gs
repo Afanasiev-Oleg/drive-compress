@@ -125,6 +125,11 @@ function bootstrap() {
   // Оформление заголовка (жирный, по центру)
   cfg.getRange('A1:C1').setFontWeight('bold').setHorizontalAlignment('center');
 
+  // Выпадающие списки (Y/N) для конфигов B2 и C2
+  const ruleYN = SpreadsheetApp.newDataValidation().requireValueInList(['Y','N'], true).setAllowInvalid(true).build();
+  cfg.getRange('B2').setDataValidation(ruleYN);
+  cfg.getRange('C2').setDataValidation(ruleYN);
+
   // Videos
   const sh = getOrCreate_(ss, 'Videos');
   if (sh.getLastRow() === 0) {
