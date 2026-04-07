@@ -1,7 +1,7 @@
 /** === AUDIT (Drive v3 + Range-probe) ===
  * - Обновление списка (REST v3): рекурсивный обход папок; кликабельные Path/Name
  * - Добор duration через v3 get
- * - Range-пробивка duration (A2→A3…, head→tail 2MB→tail 8MB) с автопродолжением пачками
+ * - Range-пробивка duration (A2→A3…, head→tail 2MB→tail 8MB) с авто продолжением пачками
  * - Recommend/Action, ревизии, экспорт CSV
  * Требуется включить Advanced Google Services → Drive API (для Revisions/Permissions).
  */
