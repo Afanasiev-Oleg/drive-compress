@@ -19,9 +19,6 @@ jobs:
     env:
       ROOT_DIR: appsscript
       SCRIPT_ID: ${{ secrets.SCRIPT_ID }}
-      CLIENT_ID: ${{ secrets.CLIENT_ID }}
-      CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
-      REFRESH_TOKEN: ${{ secrets.REFRESH_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -39,17 +36,3 @@ jobs:
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Install deps
-        run: |
-          npm init -y --silent
-          npm i googleapis@126
-
-      - name: Push to Apps Script
-        run: node scripts/apps_script_push.js
-
-      - name: Cleanup key
-        if: always()
-        run: rm -f "$RUNNER_TEMP/sa.json"
