@@ -324,7 +324,19 @@ function cmdExportCompressionCSV(){
       rows.push([r[COL.FileId-1], stripA1Link_(r[COL.Name-1]), act, stripA1Link_(r[COL.Path-1])]);
     }
   });
-  const csv = rows.map(row=>row.map(c=>`"${String(c||'').replace(/"/g,'""')}"`).join(',')).join('\n');
+
+  var csvLines = [];
+  for (var i = 0; i < rows.length; i++) {
+    var row = rows[i];
+    var escaped = [];
+    for (var j = 0; j < row.length; j++) {
+      var cell = String(row[j] || '').replace(/"/g, '""');
+      escaped.push('"' + cell + '"');
+    }
+    csvLines.push(escaped.join(','));
+  }
+  var csv = csvLines.join('\n');
+
   const file = DriveApp.createFile(Utilities.newBlob(csv,'text/csv','compress_tasks.csv'));
   if (typeof logEvent_ === 'function') {
     const exported = Math.max(0, rows.length - 1); // exclude header
