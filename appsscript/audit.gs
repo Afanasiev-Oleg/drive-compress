@@ -99,27 +99,6 @@ function cmdRefresh() {
   if (rows.length) sh.getRange(2,1,rows.length, rows[0].length).setValues(rows);
   setupFormattingAndValidation_(sh);
 
-  // Итоги под таблицей
-  if (rows.length) {
-    const totalsRow = rows.length + 3; // 1 — заголовок, 2..N+1 — данные, N+3 — первая строка итогов
-    const sumSize = rows.reduce((acc, row) => acc + (Number(row[COL.SizeMB - 1]) || 0), 0);
-    const sumEstNew = rows.reduce((acc, row) => acc + (Number(row[COL.EstNewSizeMB - 1]) || 0), 0);
-    const sumEstSavings = rows.reduce((acc, row) => acc + (Number(row[COL.EstSavingsMB - 1]) || 0), 0);
-
-    sh.getRange(totalsRow, 1, 3, COL.Status).clearContent();
-
-    sh.getRange(totalsRow, 1).setValue('Общий размер списка, MB');
-    sh.getRange(totalsRow, COL.SizeMB).setValue(round2_(sumSize));
-
-    sh.getRange(totalsRow + 1, 1).setValue('Общий Est. New Size MB');
-    sh.getRange(totalsRow + 1, COL.EstNewSizeMB).setValue(round2_(sumEstNew));
-
-    sh.getRange(totalsRow + 2, 1).setValue('Общий Est. Savings MB');
-    sh.getRange(totalsRow + 2, COL.EstSavingsMB).setValue(round2_(sumEstSavings));
-
-    sh.getRange(totalsRow, 1, 3, COL.Status).setFontWeight('bold');
-  }
-
   if (typeof logEvent_ === 'function') logEvent_('refresh', {detail: 'rows='+rows.length});
 }
 
