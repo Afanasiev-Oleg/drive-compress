@@ -99,7 +99,7 @@ function cmdRefresh() {
   if (rows.length) sh.getRange(2,1,rows.length, rows[0].length).setValues(rows);
   setupFormattingAndValidation_(sh);
 
-  // Итоги под колонками с размерами
+  // Итоги под таблицей
   if (rows.length) {
     var totalsRow = rows.length + 3;
     var sumSize = 0;
@@ -112,9 +112,9 @@ function cmdRefresh() {
       sumEstSavings += Number(rows[i][COL.EstSavingsMB - 1]) || 0;
     }
 
-    sh.getRange(totalsRow, COL.SizeMB, 1, 1).setValue('Итого: ' + round2_(sumSize));
-    sh.getRange(totalsRow, COL.EstNewSizeMB, 1, 1).setValue('Итого: ' + round2_(sumEstNew));
-    sh.getRange(totalsRow, COL.EstSavingsMB, 1, 1).setValue('Итого: ' + round2_(sumEstSavings));
+    sh.getRange(totalsRow, COL.SizeMB).setValue(round2_(sumSize));
+    sh.getRange(totalsRow, COL.EstNewSizeMB).setValue(round2_(sumEstNew));
+    sh.getRange(totalsRow, COL.EstSavingsMB).setValue(round2_(sumEstSavings));
 
     sh.getRange(totalsRow, COL.SizeMB, 1, 1).setFontWeight('bold');
     sh.getRange(totalsRow, COL.EstNewSizeMB, 1, 1).setFontWeight('bold');
