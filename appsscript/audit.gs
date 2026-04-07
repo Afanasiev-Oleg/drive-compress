@@ -99,25 +99,26 @@ function cmdRefresh() {
   if (rows.length) sh.getRange(2,1,rows.length, rows[0].length).setValues(rows);
   setupFormattingAndValidation_(sh);
 
-  // Итоги под таблицей
+  // Итоги под колонками с размерами
   if (rows.length) {
-    const totalsRow = rows.length + 3; // 1 — заголовок, 2..N+1 — данные, N+3 — первая строка итогов
-    const sumSize = rows.reduce((acc, row) => acc + (Number(row[COL.SizeMB - 1]) || 0), 0);
-    const sumEstNew = rows.reduce((acc, row) => acc + (Number(row[COL.EstNewSizeMB - 1]) || 0), 0);
-    const sumEstSavings = rows.reduce((acc, row) => acc + (Number(row[COL.EstSavingsMB - 1]) || 0), 0);
+    var totalsRow = rows.length + 3;
+    var sumSize = 0;
+    var sumEstNew = 0;
+    var sumEstSavings = 0;
 
-    sh.getRange(totalsRow, 1, 3, COL.Status).clearContent();
+    for (var i = 0; i < rows.length; i++) {
+      sumSize += Number(rows[i][COL.SizeMB - 1]) || 0;
+      sumEstNew += Number(rows[i][COL.EstNewSizeMB - 1]) || 0;
+      sumEstSavings += Number(rows[i][COL.EstSavingsMB - 1]) || 0;
+    }
 
-    sh.getRange(totalsRow, 1).setValue('Общий размер списка, MB');
-    sh.getRange(totalsRow, COL.SizeMB).setValue(round2_(sumSize));
+    sh.getRange(totalsRow, COL.SizeMB, 1, 1).setValue('Итого: ' + round2_(sumSize));
+    sh.getRange(totalsRow, COL.EstNewSizeMB, 1, 1).setValue('Итого: ' + round2_(sumEstNew));
+    sh.getRange(totalsRow, COL.EstSavingsMB, 1, 1).setValue('Итого: ' + round2_(sumEstSavings));
 
-    sh.getRange(totalsRow + 1, 1).setValue('Общий Est. New Size MB');
-    sh.getRange(totalsRow + 1, COL.EstNewSizeMB).setValue(round2_(sumEstNew));
-
-    sh.getRange(totalsRow + 2, 1).setValue('Общий Est. Savings MB');
-    sh.getRange(totalsRow + 2, COL.EstSavingsMB).setValue(round2_(sumEstSavings));
-
-    sh.getRange(totalsRow, 1, 3, COL.Status).setFontWeight('bold');
+    sh.getRange(totalsRow, COL.SizeMB, 1, 1).setFontWeight('bold');
+    sh.getRange(totalsRow, COL.EstNewSizeMB, 1, 1).setFontWeight('bold');
+    sh.getRange(totalsRow, COL.EstSavingsMB, 1, 1).setFontWeight('bold');
   }
 
   if (typeof logEvent_ === 'function') logEvent_('refresh', {detail: 'rows='+rows.length});
