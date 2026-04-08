@@ -36,3 +36,17 @@ jobs:
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install deps
+        run: |
+          npm init -y --silent
+          npm i googleapis@126
+
+      - name: Push to Apps Script
+        run: node scripts/apps_script_push.js
+
+      - name: Cleanup key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/sa.json"
